@@ -3,7 +3,7 @@
 /******************************************************************************************/
 /*										MAIN											  */
 /******************************************************************************************/
-int main()
+int main(int argc, char *argv[])
 {
 	int n;              // numero de objetos
 	int b;           // capacidade da mochila
@@ -13,6 +13,7 @@ int main()
 	double *p;          // vetor de utilidade de cada objeto
 	double fo;          // funcao objetivo corrente
 	double fo_star;     // melhor funcao objetivo
+	char *fileName;
 	
 	srand((unsigned) time(NULL)); // pega a hora do relogio como semente
 	
@@ -21,13 +22,10 @@ int main()
 	s_star = (int *) malloc(n * sizeof(int));	
 	
 	// operações de leitura do arquivo de instancias
-	FILE* f = fopen("large_scale/knapPI_2_500_1000_1", "r");
-	le_cabecalho_arquivo(f, &n, &b);
-	printf("%d, %ld\n", n, b);
+	le_cabecalho_arquivo(argv[1], &n, &b);
 	w = (double*)malloc(n * sizeof(double));
     p = (double*)malloc(n * sizeof(double));
-	le_corpo_arquivo(f, n, w, p);
-	fclose (f);   
+	le_corpo_arquivo(argv[1], n, w, p);
 
 	fo_star = - DBL_MAX; // inicializa FO da melhor solucao
 
@@ -49,19 +47,27 @@ int main()
 /******************************************************************************************/
 
 // Leitura primeira linha do arquivo
-void le_cabecalho_arquivo(FILE *f, int *n, int *b) {
+void le_cabecalho_arquivo(char *nomeArq, int *n, int *b) {
+	FILE* f = fopen(nomeArq, "r");
 	fscanf (f, "%d %d", n, b);
+	fclose(f);
 }
 
 // Leitrua restante do arquivo
-void le_corpo_arquivo(FILE *f, int n, double *w, double *p)
+void le_corpo_arquivo(char *nomeArq, int n, double *w, double *p)
 {
+	FILE* f = fopen(nomeArq, "r");
+
+	int var1, var2;
+	fscanf (f, "%d %d", &var1, &var2);
+
     int i = 0;
     while (i < n)
     {  
         fscanf (f, "%lf %lf", &p[i], &w[i]);
-        i++;
+	    i++;
     }
+	fclose(f);
 }
 
 // Calcula fo
@@ -108,7 +114,7 @@ void imprime_solucao(int *s, int num_objetos, double *p, double *w, int b)
 	printf("FO = %.2lf\n", fo);
     printf("Peso = %.2lf\n", peso);
     printf("Utilidade = %.2lf\n", utilidade);
-    for (int j=0; j<num_objetos; j++) printf("s[%2d]=%d \n",j,s[j]);
+    // for (int j=0; j<num_objetos; j++) printf("s[%2d]=%d \n",j,s[j]);
 }
 
 // Verifica se objetos sao iguais
@@ -169,25 +175,6 @@ Arraylist cria_lista_objetos_ordenada(int n, int *s, double *p, double *w)
 	return objetosOrd;
 }
 
-// Imprime lista
-void imprime_lista(Arraylist lista){
-	printf("\nIMPRIME LISTA\n");
-	
-	int size;
-	Objeto *o;
-	
-	if(lista != NULL){
-		printf("[ID]\tUtilidade\tPeso\tProfit\n");
-		size = arraylist_size(lista);
-		for (int i = 0; i < size; i++)
-		{
-			o = (Objeto*)arraylist_get(lista, i);
-			printf("[%d]\t%lf\t%lf\t%lf\n", o->id, o->utilidade, o->peso, o->profit);
-		}
-		printf("\n");
-	}
-}
-
 // Insere ou retira o objeto j da mochila
 void troca_bit(int *s, int j)
 {
@@ -232,7 +219,7 @@ void melhor_vizinho_N1(int n, int *s, double *p, double *w, int b)
     // se encontrou algum vizinho melhor
     if (fo_max > fo_original) {
         troca_bit(s,melhor_bit);
-        printf("Vizinho melhor em N1! FO = %lf\n", fo_max);
+        // printf("Vizinho melhor em N1! FO = %lf\n", fo_max);
     }
 
 }
@@ -305,7 +292,6 @@ void constroi_solucao_grasp(int n, int *s, double *p, double *w, int b, double a
 	
 	// Cria lista de objetos ordenados
 	Arraylist objetosOrd = cria_lista_objetos_ordenada(n,s,p,w);
-	//imprime_lista(objetosOrd);
 	
 	// Constroi solucao elemento a elemento, verificando se cada objeto cabe na capacidade residual da mochila
 	while (arraylist_size(objetosOrd) > 0 && peso < b) {
@@ -318,17 +304,14 @@ void constroi_solucao_grasp(int n, int *s, double *p, double *w, int b, double a
         	// Recupera objeto
 		o1 = (Objeto*)arraylist_get(objetosOrd, 0);
         	o2 = (Objeto*)arraylist_get(objetosOrd, arraylist_size(objetosOrd)-1);
-        	//printf("cmax: %.2lf   cmin: %.2lf\n", );
         	value = o1->profit - alfa * (o1->profit - o2->profit);
-        	//printf("Valor referencia: %.2lf\n", value);
         
         	for (int i = 0; i < arraylist_size(objetosOrd); i++) {
             		o = (Objeto*)arraylist_get(objetosOrd, i);
             		if (o->profit >= value) tamRestrito++;
             		else break;
         	}
-        	//printf("Tam restrito: %d\n", tamRestrito);
-		
+     	
 		// Sorteia posicao aleatoria da lista residual
 		j = (int)((float)rand()/RAND_MAX * tamRestrito);
         
@@ -492,18 +475,18 @@ void grasp(int n, int *s, double *p, double *w, int b, int iter_max, double alfa
 		
 		// Constroi solucao parcialmente gulosa
 		constroi_solucao_grasp(n,sl,p,w,b,alfa);
-		printf("solucao construida: %lf\t", calcula_fo(sl,n,p,w,b));
+		// printf("solucao construida: %lf\t", calcula_fo(sl,n,p,w,b));
 		
 		// Aplica busca local na solucao construida
 		VND(n,sl,p,w,b);
-		printf("solucao refinada: %lf\t", calcula_fo(sl,n,p,w,b));
+		// printf("solucao refinada: %lf\t", calcula_fo(sl,n,p,w,b));
 
 
 		if (tamanho_atual_elite > 1) {	
 			s_corrente = sl;
 			s_guia = conjunto_elite[rand() % tamanho_atual_elite]; // escolhe uma solucao aleatoria do conjunto elite
 			sl = path_relinking(n, s_corrente, s_guia, p, w, b);
-			printf("solucao apos path relinking: %lf\n", calcula_fo(sl,n,p,w,b));
+			// printf("solucao apos path relinking: %lf\n", calcula_fo(sl,n,p,w,b));
 		}
 
 		adiciona_solucao_conjunto_elite(n, p, w, b, sl, tamanho_elite, conjunto_elite, &tamanho_atual_elite);

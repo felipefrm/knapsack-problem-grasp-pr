@@ -5,6 +5,7 @@
 #include <iostream>
 #include <limits.h>
 #include <float.h>
+#include <string.h>
 #include "arraylist.h"
 
 #define MAX(x,y) ((x)<(y) ? (y) : (x))
@@ -18,8 +19,8 @@ typedef struct{
 
 
 // Util
-void le_cabecalho_arquivo(FILE *f, int *n, int *b);
-void le_corpo_arquivo(FILE *f, int n, double *w, double *p);
+void le_cabecalho_arquivo(char *nomeArq, int *n, int *b);
+void le_corpo_arquivo(char *nomeArq, int n, double *w, double *p);
 double calcula_fo(int *s, int num_objetos, double *p, double *w, int b);
 void imprime_solucao(int *s, int num_objetos, double *p, double *w, int b);
 const Boolean obj_equals(const Object object_1, const Object object_2);
@@ -28,7 +29,6 @@ void troca_bit(int *s, int j);
 // Lista encadeada
 Arraylist cria_lista_objetos(int n, int *s, double *p, double *w);
 Arraylist cria_lista_objetos_ordenada(int n, int *s, double *p, double *w);
-void imprime_lista(Arraylist lista);
 
 // Contrutivos
 void constroi_solucao_grasp(int n, int *s, double *p, double *w, int b, double alfa);
