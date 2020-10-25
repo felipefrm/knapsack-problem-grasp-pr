@@ -399,16 +399,12 @@ void adiciona_solucao_conjunto_elite(int n, double *p, double *w, int b, int *s,
 		int indice_pior;
 
 		if ((*tamanho_atual_elite) < tamanho_elite) {					// se o conjunto elite n foi totalmente preenchido
-			// printf("\nsolucao adicionada pra preencher, tamanho = %d\n", *tamanho_atual_elite);
 			for (int j = 0; j < n; j++) { 							// apenas adiciona a solucao a ele
 				conjunto_elite[*tamanho_atual_elite][j] = s[j];
 			}
-			// printf("%lf", calcula_fo(conjunto_elite[*tamanho_atual_elite], n, p, w, b));
-			// printf("\n");
 			(*tamanho_atual_elite)++;
 		}
-		else {			
-			// printf("\nsolucao vai tentar substituir outra\n")	;										// senao, busca a pior solucao, compara com a solucao
+		else {														// senao, busca a pior solucao, compara com a solucao
 			pior_solucao = conjunto_elite[0];						// pretendente, se ela for melhor q a pior, entra no conjunto
 			indice_pior = 0;
 			for (int j = 1; j < tamanho_elite; j++) {
@@ -418,25 +414,20 @@ void adiciona_solucao_conjunto_elite(int n, double *p, double *w, int b, int *s,
 				}
 			}
 
-			// printf("Pior solucao no conjunto: %lf, solucao que quer entrar: %lf\n", calcula_fo(pior_solucao, n, p, w, b), calcula_fo(s, n, p, w, b));
-
 			if (calcula_fo(pior_solucao, n, p, w, b) < calcula_fo(s, n, p, w, b)) {
-				// printf("Substituiu\n");
 				for (int j = 0; j < n; j++) {
 					conjunto_elite[indice_pior][j] = s[j];
 				}
 			}
-			else {
-				// printf("Nao subtituiu\n");
-			}
 		}
-
 }
 
 int* path_relinking(int n, int *s_corrente, int *s_guia, double *p, double *w, double b) {
 
 	int cardinalidade = 0;
-	int *s_melhor, *s_candidata;
+	int *s_melhor = (int*)malloc(sizeof(int) * n);
+	int *s_candidata = (int*)malloc(sizeof(int) * n);
+	int *s_melhor_movimento = (int*)malloc(sizeof(int) * n);
 
 	for (int i = 0; i < n; i++) {
 		if (s_corrente[i] != s_guia[i]) {
@@ -444,42 +435,44 @@ int* path_relinking(int n, int *s_corrente, int *s_guia, double *p, double *w, d
 		}
 	}
 
-	printf("%d\n",cardinalidade);
-	for (int j = 0; j < n; j++) {
-		printf("%d ",s_corrente[j]);
-	}
-	printf("\n");
-
-	for (int j = 0; j < n; j++) {
-		printf("%d ",s_guia[j]);
-	}
-	printf("\n");
-
-	if (calcula_fo(s_corrente,n,p,w,b) > calcula_fo(s_guia,n,p,w,b)) {		// para inciar solucao melhor com algum valor
-		s_melhor = s_corrente;											// verifica qual tem maior fo: s_corrente ou s_guia
+	if (calcula_fo(s_corrente,n,p,w,b) > calcula_fo(s_guia,n,p,w,b)) {	// para inciar solucao melhor com algum valor
+		for (int i = 0; i < n; i++)										// verifica qual tem maior fo: s_corrente ou s_guia
+			s_melhor[i] = s_corrente[i];
 	}
 	else {
-		s_melhor = s_guia;
+		for (int i = 0; i < n; i++) 
+			s_melhor[i] = s_guia[i];
 	}
 
 	while (cardinalidade > 0) {
 
+		for (int i = 0; i < n; i++) s_melhor_movimento[i] = 0;	// melhor movimento inicializa vazio
+
 		for (int i = 0; i < n; i++) {
 			if (s_corrente[i] != s_guia[i]) {
-				s_candidata = s_corrente;
+				for (int j = 0; j < n; j++) {
+					s_candidata[j] = s_corrente[j];
+				}
 				troca_bit(s_candidata, i);
+				
+				if (calcula_fo(s_candidata,n,p,w,b) > calcula_fo(s_melhor_movimento,n,p,w,b)) {
+					for (int j = 0; j < n; j++) 
+						s_melhor_movimento[j] = s_candidata[j];
+				}
+
 				if (calcula_fo(s_candidata,n,p,w,b) > calcula_fo(s_melhor,n,p,w,b)) {
-					s_melhor = s_candidata;
+					for (int j = 0; j < n; j++) 
+						s_melhor[j] = s_candidata[j];
 				}
 			}
 		}
 
-		s_corrente = s_melhor;
+		for (int i = 0; i < n; i++) {
+			s_corrente[i] = s_melhor_movimento[i];
+		}	
 		cardinalidade--;
 	}
-
 	return s_melhor;
-
 }
 
 /* aplica metaheuristica GRASP */
@@ -513,18 +506,18 @@ void grasp(int n, int *s, double *p, double *w, double b, int iter_max, double a
 		
 		// Constroi solucao parcialmente gulosa
 		constroi_solucao_grasp(n,sl,p,w,b,alfa);
-		// printf("solucao construida: %lf\t", calcula_fo(sl,n,p,w,b));
+		printf("solucao construida: %lf\t", calcula_fo(sl,n,p,w,b));
 		
 		// Aplica busca local na solucao construida
 		VND(n,sl,p,w,b);
-		// printf("solucao refinada: %lf\n", calcula_fo(sl,n,p,w,b));
+		printf("solucao refinada: %lf\t", calcula_fo(sl,n,p,w,b));
 
 
 		if (tamanho_atual_elite > 1) {	
 			s_corrente = sl;
 			s_guia = conjunto_elite[rand() % tamanho_atual_elite]; // escolhe uma solucao aleatoria do conjunto elite
 			sl = path_relinking(n, s_corrente, s_guia, p, w, b);
-			// printf("solucao apos path relinking: %lf\n", calcula_fo(sl,n,p,w,b));
+			printf("solucao apos path relinking: %lf\n", calcula_fo(sl,n,p,w,b));
 		}
 
 		adiciona_solucao_conjunto_elite(n, p, w, b, sl, tamanho_elite, conjunto_elite, &tamanho_atual_elite);
