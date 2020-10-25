@@ -18,9 +18,10 @@ typedef struct{
 
 
 // Util
-void le_arquivo(const char *nomearq, double *vetor);
-double calcula_fo(int *s, int num_objetos, double *p, double *w, double b);
-void imprime_solucao(int *s, int num_objetos, double *p, double *w, double b);
+void le_cabecalho_arquivo(FILE *f, int *n, int *b);
+void le_corpo_arquivo(FILE *f, int n, double *w, double *p);
+double calcula_fo(int *s, int num_objetos, double *p, double *w, int b);
+void imprime_solucao(int *s, int num_objetos, double *p, double *w, int b);
 const Boolean obj_equals(const Object object_1, const Object object_2);
 void troca_bit(int *s, int j);
 
@@ -30,12 +31,12 @@ Arraylist cria_lista_objetos_ordenada(int n, int *s, double *p, double *w);
 void imprime_lista(Arraylist lista);
 
 // Contrutivos
-void constroi_solucao_grasp(int n, int *s, double *p, double *w, double b, double alfa);
+void constroi_solucao_grasp(int n, int *s, double *p, double *w, int b, double alfa);
 
 // Metaheuristicas
-void VND(int n, int *s, double *p, double *w, double b);
-void grasp(int n, int *s, double *p, double *w, double b, int iter_max, double alfa);
+void VND(int n, int *s, double *p, double *w, int b);
+void grasp(int n, int *s, double *p, double *w, int b, int iter_max, double alfa);
 
 // Path Relinking
-int* path_relinking(int n, int *s_corrente, int *s_guia, double *p, double *w, double b);
+int* path_relinking(int n, int *s_corrente, int *s_guia, double *p, double *w, int b);
 void adiciona_solucao_conjunto_elite(int n, int *s, int **conjunto_elite, int *tamanho_atual_elite);

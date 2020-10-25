@@ -3,11 +3,10 @@
 /******************************************************************************************/
 /*										MAIN											  */
 /******************************************************************************************/
-int main(int argc, char **argv)
+int main()
 {
-
 	int n;              // numero de objetos
-	double b;           // capacidade da mochila
+	int b;           // capacidade da mochila
 	int *s;             // vetor solucao corrente
 	int *s_star;        // vetor melhor solucao
 	double *w;          // vetor de peso de cada objeto
@@ -15,27 +14,23 @@ int main(int argc, char **argv)
 	double fo;          // funcao objetivo corrente
 	double fo_star;     // melhor funcao objetivo
 	
-	int choice;
-	
-	n = atoi(argv[1]); // numero de objetos
-	const char *file_b = argv[2]; // arquivo de capacidade
-	const char *file_w = argv[3]; // arquivo de pesos
-	const char *file_p = argv[4]; // arquivo de utilidades
-	
 	srand((unsigned) time(NULL)); // pega a hora do relogio como semente
 	
 	// Cria os vetores
 	s = (int *) malloc(n * sizeof(int));
-	s_star = (int *) malloc(n * sizeof(int));
-	w = (double *) malloc(n * sizeof(double));
-	p = (double *) malloc(n * sizeof(double));
+	s_star = (int *) malloc(n * sizeof(int));	
 	
-	// Le os arquivos da instancia a ser testada
-	le_arquivo(file_b, &b); // capacidade
-	le_arquivo(file_w, w); // peso
-	le_arquivo(file_p, p); // utilidade
+	// operações de leitura do arquivo de instancias
+	FILE* f = fopen("large_scale/knapPI_2_500_1000_1", "r");
+	le_cabecalho_arquivo(f, &n, &b);
+	printf("%d, %ld\n", n, b);
+	w = (double*)malloc(n * sizeof(double));
+    p = (double*)malloc(n * sizeof(double));
+	le_corpo_arquivo(f, n, w, p);
+	fclose (f);   
+
 	fo_star = - DBL_MAX; // inicializa FO da melhor solucao
-	
+
     grasp(n,s,p,w,b,50,0.7);
     printf("Solucao do GRASP:\n");
     imprime_solucao(s,n,p,w,b);
@@ -53,33 +48,24 @@ int main(int argc, char **argv)
 /*				UTIL							  */
 /******************************************************************************************/
 
-// Leitura do arquivo
-void le_arquivo(const char *nomearq, double *vetor)
+// Leitura primeira linha do arquivo
+void le_cabecalho_arquivo(FILE *f, int *n, int *b) {
+	fscanf (f, "%d %d", n, b);
+}
+
+// Leitrua restante do arquivo
+void le_corpo_arquivo(FILE *f, int n, double *w, double *p)
 {
-	int j;
-	double valor;
-	FILE *arquivo;
-	
-	arquivo = fopen(nomearq,"r");
-	if (!arquivo) {
-		printf("O Arquivo %s nao pode ser aberto.\n", nomearq);
-		getchar();
-		exit(1);
-	}
-	j = 0;
-	while (!feof(arquivo)){
-		if (!fscanf(arquivo, "%lf\n", &valor)) {
-			printf("Falha na leitura!\n");
-			exit(1);
-		}
-		vetor[j] = valor;
-		j++;
-	}
-	fclose(arquivo);
+    int i = 0;
+    while (i < n)
+    {  
+        fscanf (f, "%lf %lf", &p[i], &w[i]);
+        i++;
+    }
 }
 
 // Calcula fo
-double calcula_fo(int *s, int num_objetos, double *p, double *w, double b)
+double calcula_fo(int *s, int num_objetos, double *p, double *w, int b)
 {
 	double fo;
 	double utilidade = 0, peso = 0, penalidade = 0;
@@ -101,7 +87,7 @@ double calcula_fo(int *s, int num_objetos, double *p, double *w, double b)
 
 
 // Imprime solucao
-void imprime_solucao(int *s, int num_objetos, double *p, double *w, double b)
+void imprime_solucao(int *s, int num_objetos, double *p, double *w, int b)
 {
 	double fo;
 	double utilidade = 0, peso = 0, penalidade = 0;
@@ -214,7 +200,7 @@ void troca_bit(int *s, int j)
 }
 
 /* aplica busca local pela estrategia do melhor aprimorante */
-void melhor_vizinho_N1(int n, int *s, double *p, double *w, double b)
+void melhor_vizinho_N1(int n, int *s, double *p, double *w, int b)
 {
 
     double fo_original;
@@ -252,7 +238,7 @@ void melhor_vizinho_N1(int n, int *s, double *p, double *w, double b)
 }
 
 /* aplica busca local pela estrategia do melhor aprimorante */
-void melhor_vizinho_N2(int n, int *s, double *p, double *w, double b)
+void melhor_vizinho_N2(int n, int *s, double *p, double *w, int b)
 {
 
     double fo_max, fo_vizinho;
@@ -305,7 +291,7 @@ void melhor_vizinho_N2(int n, int *s, double *p, double *w, double b)
 /*				CONSTRUTIVOS						  */
 /******************************************************************************************/
 
-void constroi_solucao_grasp(int n, int *s, double *p, double *w, double b, double alfa)
+void constroi_solucao_grasp(int n, int *s, double *p, double *w, int b, double alfa)
 // (n, s, p, w, b) = (numero de objetos, solucao corrente, vetor utilidade, vetor peso, capacidade mochila)
 {
 	double peso = 0;
@@ -365,7 +351,7 @@ void constroi_solucao_grasp(int n, int *s, double *p, double *w, double b, doubl
 /******************************************************************************************/
 
 /* aplica metaheuristica VND */
-void VND(int n, int *s, double *p, double *w, double b)
+void VND(int n, int *s, double *p, double *w, int b)
 {
 	int k;
 	double fo_s;
@@ -422,7 +408,7 @@ void adiciona_solucao_conjunto_elite(int n, double *p, double *w, int b, int *s,
 		}
 }
 
-int* path_relinking(int n, int *s_corrente, int *s_guia, double *p, double *w, double b) {
+int* path_relinking(int n, int *s_corrente, int *s_guia, double *p, double *w, int b) {
 
 	int cardinalidade = 0;
 	int *s_melhor = (int*)malloc(sizeof(int) * n);
@@ -476,7 +462,7 @@ int* path_relinking(int n, int *s_corrente, int *s_guia, double *p, double *w, d
 }
 
 /* aplica metaheuristica GRASP */
-void grasp(int n, int *s, double *p, double *w, double b, int iter_max, double alfa)
+void grasp(int n, int *s, double *p, double *w, int b, int iter_max, double alfa)
 {
 	int *sl, *s_corrente, *s_guia;
 	int random_index;

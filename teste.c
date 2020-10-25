@@ -4,43 +4,32 @@
 
 int main() {
 
-    int a[5] = {1, 2, 3, 4, 5};
-    int b[5] = {5, 4, 3, 2, 1};
+    int n;           // numero de objetos
+	int b;           // capacidade da mochila
+	int *w;          // vetor de peso de cada objeto
+	int *p;          // vetor de utilidade de cada objeto
 
-    int *aux;
+    FILE* f = fopen ("large_scale/knapPI_3_10000_1000_1", "r");
+    int valor;
+    int i = 0;
 
-    printf("A: ");
-    for (int i = 0; i < 5; i++) {
-        printf("%d ", a[i]);
+    fscanf (f, "%d %d", &n, &b);    
+
+    w = (int*)malloc(n * sizeof(int));
+    p = (int*)malloc(n * sizeof(int));
+
+    printf("n: %d\n", n);
+    printf("b: %d\n", b);
+
+    // fscanf (f, "%d", &valor);
+    while (i < n)
+    {  
+        fscanf (f, "%d %d", &p[i], &w[i]);
+        i++;
     }
-    printf("\n\n");
+    fclose (f);   
 
-    printf("B: ");
-    for (int i = 0; i < 5; i++) {
-        printf("%d ", b[i]);
+    for (int i = 0; i < n; i++) {
+        printf("%d %d\n", p[i], w[i]);
     }
-    printf("\n\n");
-
-    printf("AUX: ");
-    aux = b;
-    
-    for (int i = 0; i < 5; i++) {
-        printf("%d ", aux[i]);
-    }
-    printf("\n\n");
-
-    aux[0] = 10;
-
-    printf("NOVO B: ");
-    for (int i = 0; i < 5; i++) {
-        printf("%d ", b[i]);
-    }
-    printf("\n\n");
-
-    printf("NOVO AUX: ");
-    for (int i = 0; i < 5; i++) {
-        printf("%d ", aux[i]);
-    }
-    printf("\n\n");
-
 }
