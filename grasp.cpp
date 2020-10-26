@@ -523,7 +523,6 @@ void grasp_pr(int n, int *s, double *p, double *w, int b, int iter_max, double a
 		}
 		fprintf(arq_saida, "%lf\n", fo_star);
 	}
-	fprintf(arq_saida, "#\n");
 	fclose(arq_saida);
 }
 
@@ -562,7 +561,6 @@ void grasp(int n, int *s, double *p, double *w, int b, int iter_max, double alfa
 		}
 		fprintf(arq_saida, "%lf\n", fo_star);
 	}
-	fprintf(arq_saida, "#\n");
 	fclose(arq_saida);
 }
 
@@ -575,7 +573,7 @@ void contaTempoProcessador(double *utime, double *stime){
 
 
 void imprimeTempo(double user_time, double system_time){
-	FILE *arq = fopen("tempoGraspPR.txt", "a");
+	FILE *arq = fopen("tempo.txt", "a");
   	fprintf(arq, "%f\n", user_time+system_time);
 	fclose(arq);
 }
