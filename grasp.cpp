@@ -6,8 +6,8 @@
 int main(int argc, char *argv[])
 {
 	if (argc < 3) {
-		printf("Execute o programa com:\n./main [caminho do arquivo de entrada] [algoritmo a ser usado (grasp ou grasppr)]\n");
-		printf("Exemplo: ./main large_scale/knapPI_1_100_1000_1 grasppr\n");
+		printf("Execute o programa com:\n./main [caminho do arquivo da instancia] [algoritmo a ser usado (grasp ou grasppr)]\n");
+		printf("Exemplo: ./main instances/knapPI_1_100_1000_1 grasppr\n");
 		return 0;
 	}
 
@@ -26,12 +26,12 @@ int main(int argc, char *argv[])
 	srand((unsigned) time(NULL)); // pega a hora do relogio como semente
 	
 	// operações de leitura do arquivo de instancias
-	le_cabecalho_arquivo(nomeArqEntrada, &n, &b);
+	if (!le_cabecalho_arquivo(nomeArqEntrada, &n, &b)) return 0;
 	s = (int *) malloc(n * sizeof(int));
 	s_star = (int *) malloc(n * sizeof(int));	
 	w = (double*)malloc(n * sizeof(double));
     p = (double*)malloc(n * sizeof(double));
-	le_corpo_arquivo(nomeArqEntrada, n, w, p);
+	if(!le_corpo_arquivo(nomeArqEntrada, n, w, p)) return 0;
 
 	fo_star = - DBL_MAX; // inicializa FO da melhor solucao
 
@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 	}
 
 	else {
-		printf("Declare, pela linha de comando, qual algoritmo quer exeuctar: grasp ou grasppr.\n");
+		printf("Declare, pela linha de comando, qual algoritmo quer executar: grasp ou grasppr.\n");
 	}
 
 	// Libera memoria
@@ -70,16 +70,25 @@ int main(int argc, char *argv[])
 /******************************************************************************************/
 
 // Leitura primeira linha do arquivo
-void le_cabecalho_arquivo(const char *nomeArq, int *n, int *b) {
+int le_cabecalho_arquivo(const char *nomeArq, int *n, int *b) {
 	FILE* f = fopen(nomeArq, "r");
+	if (f == NULL) {
+		fprintf(stderr, "Erro ao abrir instância. Verifique novamente o caminho do arquivo.\n");
+		return 0;
+	}
 	fscanf (f, "%d %d", n, b);
 	fclose(f);
+	return 1;
 }
 
 // Leitrua restante do arquivo
-void le_corpo_arquivo(const char *nomeArq, int n, double *w, double *p)
+int le_corpo_arquivo(const char *nomeArq, int n, double *w, double *p)
 {
 	FILE* f = fopen(nomeArq, "r");
+	if (f == NULL) {
+		fprintf(stderr, "Erro ao abrir instância. Verifique novamente o caminho do arquivo.\n");
+		return 0;
+	}
 
 	int var1, var2;
 	fscanf (f, "%d %d", &var1, &var2);
@@ -91,6 +100,7 @@ void le_corpo_arquivo(const char *nomeArq, int n, double *w, double *p)
 	    i++;
     }
 	fclose(f);
+	return 1;
 }
 
 // Calcula fo
@@ -296,6 +306,19 @@ void melhor_vizinho_N2(int n, int *s, double *p, double *w, int b)
         }
 }
 
+void contaTempoProcessador(double *utime, double *stime){
+  struct rusage resources;
+  getrusage(RUSAGE_SELF, &resources);
+  *utime = (double) resources.ru_utime.tv_sec + 1.e-6 * (double) resources.ru_utime.tv_usec;
+  *stime = (double) resources.ru_stime.tv_sec + 1.e-6 * (double) resources.ru_stime.tv_usec;
+}
+
+
+void imprimeTempo(double user_time, double system_time){
+	FILE *arq = fopen("tempo.txt", "a");
+  	fprintf(arq, "%f\n", user_time+system_time);
+	fclose(arq);
+}
 
 /******************************************************************************************/
 /*				CONSTRUTIVOS						  */
@@ -562,20 +585,6 @@ void grasp(int n, int *s, double *p, double *w, int b, int iter_max, double alfa
 		fprintf(arq_saida, "%lf\n", fo_star);
 	}
 	fclose(arq_saida);
-}
-
-void contaTempoProcessador(double *utime, double *stime){
-  struct rusage resources;
-  getrusage(RUSAGE_SELF, &resources);
-  *utime = (double) resources.ru_utime.tv_sec + 1.e-6 * (double) resources.ru_utime.tv_usec;
-  *stime = (double) resources.ru_stime.tv_sec + 1.e-6 * (double) resources.ru_stime.tv_usec;
-}
-
-
-void imprimeTempo(double user_time, double system_time){
-	FILE *arq = fopen("tempo.txt", "a");
-  	fprintf(arq, "%f\n", user_time+system_time);
-	fclose(arq);
 }
 
 

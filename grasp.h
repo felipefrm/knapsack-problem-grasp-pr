@@ -19,8 +19,8 @@ typedef struct{
 
 
 // Util
-void le_cabecalho_arquivo(const char *nomeArq, int *n, int *b);
-void le_corpo_arquivo(const char *nomeArq, int n, double *w, double *p);
+int le_cabecalho_arquivo(const char *nomeArq, int *n, int *b);
+int le_corpo_arquivo(const char *nomeArq, int n, double *w, double *p);
 double calcula_fo(int *s, int num_objetos, double *p, double *w, int b);
 void imprime_solucao(int *s, int num_objetos, double *p, double *w, int b);
 const Boolean obj_equals(const Object object_1, const Object object_2);

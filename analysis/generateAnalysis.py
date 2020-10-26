@@ -179,13 +179,13 @@ def generate1000IterGraph(grasp, grasppr):
         fig.savefig(f'{graphFolderName}/{instanceFile}.png', dpi=fig.dpi)
 
 
-grasp = readOutputFile("../arquivos_saida/saida_grasp.txt")
-grasppr = readOutputFile("../arquivos_saida/saida_grasppr.txt")
+grasp = readOutputFile("files/saida_grasp.txt")
+grasppr = readOutputFile("files/saida_grasppr.txt")
 generateGraphs(grasp, grasppr)
 
-time = readTimeFile("../arquivos_saida/tempo.txt")
+time = readTimeFile("files/tempo.txt")
 generateTimeGraph(time)
 
-graspIter1000 = readIter1000("../arquivos_saida/1000iter_grasp.txt")
-graspprIter1000 = readIter1000("../arquivos_saida/1000iter_grasppr.txt")
+graspIter1000 = readIter1000("files/1000iter_grasp.txt")
+graspprIter1000 = readIter1000("files/1000iter_grasppr.txt")
 generate1000IterGraph(graspIter1000, graspprIter1000)
