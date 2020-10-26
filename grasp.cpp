@@ -5,56 +5,79 @@
 /******************************************************************************************/
 int main(int argc, char *argv[])
 {
+	if (argc < 3) {
+		printf("Execute o programa com:\n./main [caminho do arquivo de entrada] [algoritmo a ser usado (grasp ou grasppr)]\n");
+		printf("Exemplo: ./main large_scale/knapPI_1_100_1000_1 grasppr\n");
+		return 0;
+	}
+
 	int n;              // numero de objetos
-	int b;           // capacidade da mochila
+	int b;           	// capacidade da mochila
 	int *s;             // vetor solucao corrente
 	int *s_star;        // vetor melhor solucao
 	double *w;          // vetor de peso de cada objeto
 	double *p;          // vetor de utilidade de cada objeto
 	double fo;          // funcao objetivo corrente
 	double fo_star;     // melhor funcao objetivo
-	char *fileName;
+	double utime_ant, utime_pos, stime_ant, stime_pos;
+	const char *nomeArqEntrada = argv[1];
+	const char *heuristica = argv[2];
 	
 	srand((unsigned) time(NULL)); // pega a hora do relogio como semente
 	
-	// Cria os vetores
+	// operações de leitura do arquivo de instancias
+	le_cabecalho_arquivo(nomeArqEntrada, &n, &b);
 	s = (int *) malloc(n * sizeof(int));
 	s_star = (int *) malloc(n * sizeof(int));	
-	
-	// operações de leitura do arquivo de instancias
-	le_cabecalho_arquivo(argv[1], &n, &b);
 	w = (double*)malloc(n * sizeof(double));
     p = (double*)malloc(n * sizeof(double));
-	le_corpo_arquivo(argv[1], n, w, p);
+	le_corpo_arquivo(nomeArqEntrada, n, w, p);
 
 	fo_star = - DBL_MAX; // inicializa FO da melhor solucao
 
-    grasp(n,s,p,w,b,50,0.7);
-    printf("Solucao do GRASP:\n");
-    imprime_solucao(s,n,p,w,b);
-	
+	if (!strcmp(heuristica, "grasp")) {
+		contaTempoProcessador(&utime_ant, &stime_ant);
+	    grasp(n,s,p,w,b,50,0.7);
+		contaTempoProcessador(&utime_pos, &stime_pos);
+      	imprimeTempo(utime_pos-utime_ant, stime_pos-stime_ant);
+		printf("Solucao do GRASP:\n");	
+    	imprime_solucao(s,n,p,w,b);
+	}
+
+	else if (!strcmp(heuristica, "grasppr")) {
+		contaTempoProcessador(&utime_ant, &stime_ant);
+	    grasp_pr(n,s,p,w,b,50,0.7);
+		contaTempoProcessador(&utime_pos, &stime_pos);
+      	imprimeTempo(utime_pos-utime_ant, stime_pos-stime_ant);
+		printf("Solucao do GRASP-PR:\n");
+    	imprime_solucao(s,n,p,w,b);
+	}
+
+	else {
+		printf("Declare, pela linha de comando, qual algoritmo quer exeuctar: grasp ou grasppr.\n");
+	}
+
 	// Libera memoria
 	free(s);
 	free(s_star);
 	free(w);
 	free(p);
 	return 0;
-	
 }
 
 /******************************************************************************************/
-/*				UTIL							  */
+/*								UTIL							  */
 /******************************************************************************************/
 
 // Leitura primeira linha do arquivo
-void le_cabecalho_arquivo(char *nomeArq, int *n, int *b) {
+void le_cabecalho_arquivo(const char *nomeArq, int *n, int *b) {
 	FILE* f = fopen(nomeArq, "r");
 	fscanf (f, "%d %d", n, b);
 	fclose(f);
 }
 
 // Leitrua restante do arquivo
-void le_corpo_arquivo(char *nomeArq, int n, double *w, double *p)
+void le_corpo_arquivo(const char *nomeArq, int n, double *w, double *p)
 {
 	FILE* f = fopen(nomeArq, "r");
 
@@ -101,7 +124,7 @@ void imprime_solucao(int *s, int num_objetos, double *p, double *w, int b)
 	for (int i = 0; i < num_objetos; i++) {
 		if (s[i]) {
 			utilidade += p[i];
-			peso += w[i];
+			peso += w[i]; 
 		}
 		penalidade += w[i];
 	}
@@ -444,16 +467,14 @@ int* path_relinking(int n, int *s_corrente, int *s_guia, double *p, double *w, i
 	return s_melhor;
 }
 
-/* aplica metaheuristica GRASP */
-void grasp(int n, int *s, double *p, double *w, int b, int iter_max, double alfa)
+/* aplica metaheuristica GRASP com PR */
+void grasp_pr(int n, int *s, double *p, double *w, int b, int iter_max, double alfa)
 {
+	FILE *arq_saida = fopen("arq_saida_grasppr.txt", "a");
 	int *sl, *s_corrente, *s_guia;
 	int random_index;
 	int tamanho_atual_elite = 0;
 	int tamanho_elite = 10;
-
-    srand(time(NULL));
-
 
 	double fo_star = -DBL_MAX;
 	
@@ -500,8 +521,63 @@ void grasp(int n, int *s, double *p, double *w, int b, int iter_max, double alfa
 			// atualiza fo
 			fo_star = calcula_fo(sl,n,p,w,b);
 		}
+		fprintf(arq_saida, "%lf\n", fo_star);
 	}
+	fprintf(arq_saida, "#\n");
+	fclose(arq_saida);
 }
 
+/* aplica metaheuristica GRASP */
+void grasp(int n, int *s, double *p, double *w, int b, int iter_max, double alfa)
+{
+	FILE *arq_saida = fopen("arq_saida_grasp.txt", "a");
+	int *sl;
+	double fo_star = -DBL_MAX;
+	
+	// cria solucao auxiliar
+	sl = (int *) malloc(n * sizeof(int));
+	
+	// Enquanto melhoria
+	for (int i = 0; i < iter_max; i++) {
+		
+		// Limpa solucao
+		for (int j=0; j<n; j++) sl[j] = 0;
+		
+		// Constroi solucao parcialmente gulosa
+		constroi_solucao_grasp(n,sl,p,w,b,alfa);
+		// printf("solucao construida: %lf\t", calcula_fo(sl,n,p,w,b));
+		
+		// Aplica busca local na solucao construida
+		VND(n,sl,p,w,b);
+		// printf("solucao refinada: %lf\n", calcula_fo(sl,n,p,w,b));
+		
+		// Atualiza melhor solucao
+		if (calcula_fo(sl,n,p,w,b) > fo_star) {
+			
+			// copia em s a melhor solucao
+			for (int i = 0; i < n; i++) s[i] = sl[i];
+			
+			// atualiza fo
+			fo_star = calcula_fo(sl,n,p,w,b);
+		}
+		fprintf(arq_saida, "%lf\n", fo_star);
+	}
+	fprintf(arq_saida, "#\n");
+	fclose(arq_saida);
+}
+
+void contaTempoProcessador(double *utime, double *stime){
+  struct rusage resources;
+  getrusage(RUSAGE_SELF, &resources);
+  *utime = (double) resources.ru_utime.tv_sec + 1.e-6 * (double) resources.ru_utime.tv_usec;
+  *stime = (double) resources.ru_stime.tv_sec + 1.e-6 * (double) resources.ru_stime.tv_usec;
+}
+
+
+void imprimeTempo(double user_time, double system_time){
+	FILE *arq = fopen("tempoGraspPR.txt", "a");
+  	fprintf(arq, "%f\n", user_time+system_time);
+	fclose(arq);
+}
 
 
